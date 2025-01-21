@@ -25,13 +25,13 @@ class Organization(models.Model):
 
 class Users(models.Model):
     user = models.OneToOneField(AuthUser, on_delete=models.CASCADE)
-    full_name = models.CharField(max_length=100, null=True)
+    full_name = models.CharField(max_length=100, blank=True)
     organization = models.ForeignKey(Organization, on_delete=models.DO_NOTHING, null=True)
 
 
 class EmailVerification(models.Model):
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
-    key = models.CharField(max_length=100, null=True)
+    key = models.CharField(max_length=100, blank=True)
     verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
