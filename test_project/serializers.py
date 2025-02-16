@@ -1,8 +1,9 @@
 from rest_framework import serializers
-from .models import PayPlan
+
+from .model import Todos
 
 
-class PayPlanSerializer(serializers.ModelSerializer):
+class TodoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PayPlan
+        model = Todos
         fields = '__all__'

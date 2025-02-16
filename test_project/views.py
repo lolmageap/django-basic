@@ -1,19 +1,19 @@
 from rest_framework import generics
-from .models import PayPlan
-from .serializers import PayPlanSerializer
+
+from .model import Todos
+from .serializers import TodoSerializer
 
 
-def perform_create(serializer: PayPlanSerializer) -> None:
+def perform_create(serializer: TodoSerializer) -> None:
     serializer.save()
 
 
-class CreatePayPlanView(generics.CreateAPIView):
-    queryset = PayPlan.objects.all()
-    serializer_class = PayPlanSerializer
+class CreateTodoView(generics.CreateAPIView):
+    queryset = Todos.objects.all()
+    serializer_class = TodoSerializer
 
 
-class GetPayPlansView(generics.RetrieveAPIView):
-    queryset = PayPlan.objects.all()
-    serializer_class = PayPlanSerializer
+class GetTodoView(generics.RetrieveAPIView):
+    queryset = Todos.objects.all()
+    serializer_class = TodoSerializer
     lookup_field = 'pk'
-
