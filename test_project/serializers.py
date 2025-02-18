@@ -32,4 +32,6 @@ class SingUpSerializer(serializers.Serializer):
     __validate__ = PasswordValidator.validate
     __create__ = create
 
-
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(max_length=125)
