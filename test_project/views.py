@@ -1,35 +1,74 @@
+from tokenize import Token
+
 from django.contrib.auth import authenticate
 from rest_framework import generics
-
 from rest_framework import status
-from tokenize import Token
-from .model import Todos
 from rest_framework.response import Response
-from .serializers import TodoSerializer, SingUpSerializer, LoginSerializer
+from rest_framework.views import APIView
 
-
-def perform_create(serializer: TodoSerializer) -> None:
-    serializer.save()
+from .model import Todos
+from .serializers import TodoSerializer, LoginSerializer, SignUpSerializer, FindOneTodoResponseSerializer, \
+    FindAllTodoResponseSerializer, FindAllTodoRequestSerializer
 
 
 class CreateTodoView(generics.CreateAPIView):
-    queryset = Todos.objects.all()
     serializer_class = TodoSerializer
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            todo = serializer.save()
+            return Response({"message": "Todo created successfully"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class GetTodoView(generics.RetrieveAPIView):
+
+class FindOneTodoView(APIView):
+    def get(self, pk):
+        queryset = Todos.objects.filter(pk=pk)
+
+        if not queryset.exists():
+            return Response({"detail": "Todo not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        response_serializer = FindOneTodoResponseSerializer(queryset.first())
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class FindAllTodoView(generics.ListAPIView):
+    serializer_class = FindAllTodoResponseSerializer
     queryset = Todos.objects.all()
-    serializer_class = TodoSerializer
-    lookup_field = 'pk'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        request_serializer = FindAllTodoRequestSerializer(data=self.request.query_params)
+        request_serializer.is_valid(raise_exception=True)
+
+        start_date = request_serializer.validated_data.get('start_date')
+        end_date = request_serializer.validated_data.get('end_date')
+        user = request_serializer.validated_data.get('user')
+        is_completed = request_serializer.validated_data.get('is_completed')
+
+        if start_date:
+            queryset = queryset.filter(created_at__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(created_at__lte=end_date)
+        if user is not None:
+            queryset = queryset.filter(user=user)
+        if is_completed is not None:
+            queryset = queryset.filter(is_completed=is_completed)
+
+        return queryset
 
 
 class SignUpView(generics.GenericAPIView):
-    serializer_class = SingUpSerializer
+    serializer_class = SignUpSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(generics.GenericAPIView):
