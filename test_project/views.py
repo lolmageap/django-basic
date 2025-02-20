@@ -1,7 +1,9 @@
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from rest_framework import generics
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .model import Todos
@@ -11,6 +13,8 @@ from .serializers import TodoSerializer, LoginSerializer, SignUpSerializer, Find
 
 class CreateTodoView(generics.CreateAPIView):
     serializer_class = TodoSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -21,6 +25,9 @@ class CreateTodoView(generics.CreateAPIView):
 
 
 class FindOneTodoView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, pk: int):
         queryset = Todos.objects.filter(pk=pk)
 
@@ -34,6 +41,8 @@ class FindOneTodoView(APIView):
 class FindAllTodoView(generics.ListAPIView):
     serializer_class = FindAllTodoResponseSerializer
     queryset = Todos.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = super().get_queryset()
