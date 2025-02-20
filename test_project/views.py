@@ -1,11 +1,9 @@
-from tokenize import Token
-
+from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from .model import Todos
 from .serializers import TodoSerializer, LoginSerializer, SignUpSerializer, FindOneTodoResponseSerializer, \
     FindAllTodoResponseSerializer, FindAllTodoRequestSerializer
@@ -17,13 +15,13 @@ class CreateTodoView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            todo = serializer.save()
+            serializer.save()
             return Response({"message": "Todo created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class FindOneTodoView(APIView):
-    def get(self, pk):
+    def get(self, pk: int):
         queryset = Todos.objects.filter(pk=pk)
 
         if not queryset.exists():
@@ -66,7 +64,7 @@ class SignUpView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            serializer.save()
             return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -84,7 +82,7 @@ class LoginView(generics.GenericAPIView):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            token, created = Token.objects.get_or_create(user=user)
+            token, created = Token.user.objects.get_or_create(user=user)
             return Response({"token": token.key}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
