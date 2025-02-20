@@ -10,7 +10,7 @@ class TodoSerializer(serializers.ModelSerializer):
         fields = 'title', 'description', 'is_completed', 'user'
 
         @staticmethod
-        def validate(data):
+        def validate(data: dict) -> dict:
             title = data.get('title', '')
             if not (3 <= len(title) <= 50):
                 raise serializers.ValidationError({'title': 'Title must be between 3 and 50 characters.'})
@@ -38,10 +38,10 @@ class FindAllTodoResponseSerializer(serializers.ModelSerializer):
 
 class PasswordValidator:
     @staticmethod
-    def validate(self):
-        if self['password'] != self['password_confirm']:
+    def validate(data: dict) -> dict:
+        if data['password'] != data['password_confirm']:
             raise serializers.ValidationError('Password does not match')
-        return self
+        return data
 
 
 class SignUpSerializer(serializers.Serializer):
@@ -51,10 +51,10 @@ class SignUpSerializer(serializers.Serializer):
     password_confirm = serializers.CharField(max_length=125)
     __validate__ = PasswordValidator.validate
 
-    def validate(self, data):
+    def validate(self, data: dict) -> dict:
         return self.__validate__(data)
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> Users:
         validated_data.pop("password_confirm")
         validated_data["password"] = make_password(validated_data["password"])
         return Users.objects.create(**validated_data)
