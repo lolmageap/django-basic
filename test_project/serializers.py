@@ -4,7 +4,7 @@ from rest_framework import serializers
 from .model import Todos, Users
 
 
-class TodoSerializer(serializers.ModelSerializer):
+class CreateTodoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Todos
         fields = 'title', 'description', 'is_completed', 'user'
@@ -37,6 +37,9 @@ class FindAllTodoResponseSerializer(serializers.ModelSerializer):
 
 
 class PasswordValidator:
+    def __init__(self):
+        pass
+
     @staticmethod
     def validate(data: dict) -> dict:
         if data['password'] != data['password_confirm']:

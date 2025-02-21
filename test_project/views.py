@@ -7,12 +7,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .model import Todos
-from .serializers import TodoSerializer, LoginSerializer, SignUpSerializer, FindOneTodoResponseSerializer, \
+from .serializers import CreateTodoSerializer, LoginSerializer, SignUpSerializer, FindOneTodoResponseSerializer, \
     FindAllTodoResponseSerializer, FindAllTodoRequestSerializer
 
 
 class CreateTodoView(generics.CreateAPIView):
-    serializer_class = TodoSerializer
+    serializer_class = CreateTodoSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
