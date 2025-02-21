@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'project',
+    'test_project',
     'rest_framework',
     'rest_framework.authtoken',
 ]
@@ -61,7 +61,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = '.urls'
+ROOT_URLCONF = 'test_project.urls'
 
 TEMPLATES = [
     {
@@ -79,7 +79,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'my_project.wsgi.application'
+WSGI_APPLICATION = 'test_project.wsgi.application'
 
 
 # Database
@@ -91,7 +91,7 @@ DATABASES = {
         'NAME': 'my_project',
         'USER': 'root',
         'PASSWORD': 'password',
-        'HOST': 'localhost',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {
             'autocommit': True,
@@ -123,9 +123,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ko-kr'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
