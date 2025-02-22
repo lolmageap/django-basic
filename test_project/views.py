@@ -1,11 +1,12 @@
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from rest_framework import generics
 from rest_framework import status
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from .model import Todos
 from .serializers import CreateTodoSerializer, LoginSerializer, SignUpSerializer, FindOneTodoResponseSerializer, \
     FindAllTodoResponseSerializer, FindAllTodoRequestSerializer
@@ -91,7 +92,31 @@ class LoginView(generics.GenericAPIView):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            token, created = Token.user.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=status.HTTP_200_OK)
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            response = Response({"message": "Login successful"}, status=status.HTTP_200_OK)
+            response["Authorization"] = f"Bearer {access_token}"
+
+            response.set_cookie(
+                "refresh_token",
+                refresh_token,
+                httponly=True,
+                secure=True,
+                samesite="Lax"
+            )
+
+            return response
         else:
             return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+class LogoutView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        response = Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
+        response.headers["Authorization"] = ""
+        response.delete_cookie("refresh_token")
+        return response
