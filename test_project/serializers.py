@@ -1,19 +1,32 @@
 from django.contrib.auth.hashers import make_password
+from django.db import transaction
 from rest_framework import serializers
-
 from .model import Todos, Users
 
 
 class CreateTodoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Todos
-        fields = 'title', 'description', 'is_completed', 'user'
+        fields = 'title', 'description', 'user', 'started_at', 'ended_at'
 
-        @staticmethod
-        def validate(data: dict) -> dict:
+        def validate_initialize(self, data: dict) -> dict:
             title = data.get('title', '')
             if not (3 <= len(title) <= 50):
                 raise serializers.ValidationError({'title': 'Title must be between 3 and 50 characters.'})
+            return data
+
+        def validate_scheduling_time(self, data: dict) -> dict:
+            user = data.get('user')
+            started_at = data.get('started_at')
+            ended_at = data.get('ended_at')
+
+            if started_at > ended_at:
+                raise serializers.ValidationError({'ended_at': 'End time must be greater than start time.'})
+
+            with transaction.atomic():
+                if Todos.objects.filter(user=user, started_at__lte=started_at, ended_at__gte=ended_at).exists():
+                    raise serializers.ValidationError({'You have a task scheduled at this time.'})
+
             return data
 
 
@@ -37,9 +50,6 @@ class FindAllTodoResponseSerializer(serializers.ModelSerializer):
 
 
 class PasswordValidator:
-    def __init__(self):
-        pass
-
     @staticmethod
     def validate(data: dict) -> dict:
         if data['password'] != data['password_confirm']:
@@ -52,10 +62,9 @@ class SignUpSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(max_length=125)
     password_confirm = serializers.CharField(max_length=125)
-    __validate__ = PasswordValidator.validate
 
     def validate(self, data: dict) -> dict:
-        return self.__validate__(data)
+        return PasswordValidator.validate(data)
 
     def create(self, validated_data: dict) -> Users:
         validated_data.pop("password_confirm")
