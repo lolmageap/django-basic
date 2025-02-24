@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.db import transaction
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.generics import CreateAPIView, ListAPIView
@@ -6,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from .model import Todos
 from .serializers import CreateTodoSerializer, LoginSerializer, SignUpSerializer, FindOneTodoResponseSerializer, \
     FindAllTodoResponseSerializer, FindAllTodoRequestSerializer
@@ -18,9 +20,10 @@ class CreateTodoView(CreateAPIView):
 
     def perform_create(self, serializer):
         serializer = self.get_serializer(data=self.request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Todo created successfully"}, status=status.HTTP_201_CREATED)
+        with transaction.atomic():
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "Todo created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -72,9 +75,10 @@ class SignUpView(CreateAPIView):
 
     def perform_create(self, serializer):
         serializer = self.get_serializer(data=self.request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
+        with transaction.atomic():
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

@@ -29,6 +29,8 @@ class Todos(models.Model):
     description = models.TextField()
     is_completed = models.BooleanField(default=False)
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    started_at = models.DateTimeField()
+    ended_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     objects = models.Manager()
