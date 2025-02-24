@@ -53,6 +53,11 @@ REST_FRAMEWORK = {
     ],
 }
 
+# AUTH_USER_MODEL = 'users.Users'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
