@@ -35,7 +35,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'test_project',
+
+    'users',
+    'todos',
+
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
@@ -68,7 +71,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'test_project.urls'
+ROOT_URLCONF = 'users.urls'
 
 TEMPLATES = [
     {
@@ -86,7 +89,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'test_project.wsgi.application'
+WSGI_APPLICATION = 'myapp.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
