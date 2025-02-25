@@ -1,6 +1,6 @@
 from django.db import models
 
-from users.model import Users
+from users.models import Users
 
 
 class Todos(models.Model):

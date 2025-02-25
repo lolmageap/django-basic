@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from .model import Todos
+from .models import Todos
 
 
 class CreateTodoSerializer(serializers.ModelSerializer):
