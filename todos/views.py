@@ -5,6 +5,8 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .custom_exception import NotFoundException
+
 from .models import Todos
 from .serializers import CreateTodoSerializer, FindOneTodoResponseSerializer, FindAllTodoResponseSerializer, \
     FindAllTodoRequestSerializer, UpdateTodoSerializer
@@ -30,7 +32,7 @@ class FindOneTodoView(APIView):
         queryset = Todos.objects.filter(pk=pk, user=self.request.user)
 
         if not queryset.exists():
-            return Response({"detail": "Todo not found"}, status=status.HTTP_404_NOT_FOUND)
+            raise NotFoundException("Todo not found")
 
         response_serializer = FindOneTodoResponseSerializer(queryset.first())
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -72,7 +74,7 @@ class UpdateTodoView(APIView):
     def put(self, pk: int):
         todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
         if todo is None:
-            return Response({"detail": "Todo not found"}, status=status.HTTP_404_NOT_FOUND)
+            raise NotFoundException("Todo not found")
 
         serializer = UpdateTodoSerializer(data=self.request.data, instance=todo)
         serializer.is_valid(raise_exception=True)
@@ -88,7 +90,7 @@ class DeleteTodoView(APIView):
     def delete(self, pk: int):
         todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
         if todo is None:
-            return Response({"detail": "Todo not found"}, status=status.HTTP_404_NOT_FOUND)
+            raise NotFoundException("Todo not found")
         else:
             todo.delete()
             return Response({"message": "Todo deleted successfully"}, status=status.HTTP_200_OK)
