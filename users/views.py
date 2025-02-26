@@ -1,11 +1,11 @@
 from django.contrib.auth import authenticate
 from django.db import transaction
 from rest_framework import status
-from rest_framework import views
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Role
@@ -25,10 +25,10 @@ class SignUpView(CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginView(views.APIView):
+class LoginView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data.get("email")
@@ -59,11 +59,11 @@ class LoginView(views.APIView):
             return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-class LogoutView(CreateAPIView):
+class LogoutView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
+    def post(self, request):
         response = Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
         response.headers["Authorization"] = ""
         response.delete_cookie("refresh_token")
