@@ -2,7 +2,6 @@ from django.contrib.auth import authenticate
 from django.db import transaction
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,16 +11,15 @@ from .models import Role
 from .serializers import LoginSerializer, SignUpSerializer
 
 
-class SignUpView(CreateAPIView):
-    serializer_class = SignUpSerializer
+class SignUpView(APIView):
     permission_classes = [AllowAny]
 
-    def perform_create(self, serializer):
-        serializer = self.get_serializer(data=self.request.data)
+    def post(self, request):
+        serializer = SignUpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         with transaction.atomic():
-            if serializer.is_valid():
-                user = serializer.save()
-                Role.objects.create(user=user, name=Role.Roles.USER)
+            user = serializer.save()
+            Role.objects.create(user=user, name=Role.Roles.USER)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -51,7 +49,7 @@ class LoginView(APIView):
                 refresh_token,
                 httponly=True,
                 secure=True,
-                samesite="Lax"
+                samesite="Lax",
             )
 
             return response

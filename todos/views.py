@@ -5,7 +5,6 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from .models import Todos
 from .serializers import CreateTodoSerializer, FindOneTodoResponseSerializer, FindAllTodoResponseSerializer, \
     FindAllTodoRequestSerializer, UpdateTodoSerializer
@@ -17,11 +16,10 @@ class CreateTodoView(APIView):
 
     def post(self):
         serializer = CreateTodoSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
         with transaction.atomic():
-            if serializer.is_valid():
-                serializer.save()
-                return Response({"message": "Todo created successfully"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response({"message": "Todo created successfully"}, status=status.HTTP_201_CREATED)
 
 
 class FindOneTodoView(APIView):
@@ -29,7 +27,7 @@ class FindOneTodoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, pk: int):
-        queryset = Todos.objects.filter(pk=pk)
+        queryset = Todos.objects.filter(pk=pk, user=self.request.user)
 
         if not queryset.exists():
             return Response({"detail": "Todo not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -45,7 +43,7 @@ class FindAllTodoView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = self.queryset
 
         request_serializer = FindAllTodoRequestSerializer(data=self.request.query_params)
         request_serializer.is_valid(raise_exception=True)
@@ -77,11 +75,10 @@ class UpdateTodoView(APIView):
             return Response({"detail": "Todo not found"}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = UpdateTodoSerializer(data=self.request.data, instance=todo)
+        serializer.is_valid(raise_exception=True)
         with transaction.atomic():
-            if serializer.is_valid():
-                serializer.save()
-                return Response({"message": "Todo updated successfully"}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response({"message": "Todo updated successfully"}, status=status.HTTP_200_OK)
 
 
 class DeleteTodoView(APIView):
