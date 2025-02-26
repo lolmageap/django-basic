@@ -1,23 +1,22 @@
 from django.db import transaction
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Todos
 from .serializers import CreateTodoSerializer, FindOneTodoResponseSerializer, FindAllTodoResponseSerializer, \
-    FindAllTodoRequestSerializer
+    FindAllTodoRequestSerializer, UpdateTodoSerializer
 
 
-class CreateTodoView(CreateAPIView):
-    serializer_class = CreateTodoSerializer
+class CreateTodoView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer = self.get_serializer(data=self.request.data)
+    def post(self):
+        serializer = CreateTodoSerializer(data=self.request.data)
         with transaction.atomic():
             if serializer.is_valid():
                 serializer.save()
@@ -66,3 +65,33 @@ class FindAllTodoView(ListAPIView):
             queryset = queryset.filter(is_completed=is_completed)
 
         return queryset
+
+
+class UpdateTodoView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, pk: int):
+        todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
+        if todo is None:
+            return Response({"detail": "Todo not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UpdateTodoSerializer(data=self.request.data, instance=todo)
+        with transaction.atomic():
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "Todo updated successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteTodoView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, pk: int):
+        todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
+        if todo is None:
+            return Response({"detail": "Todo not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            todo.delete()
+            return Response({"message": "Todo deleted successfully"}, status=status.HTTP_200_OK)
