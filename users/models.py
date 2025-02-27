@@ -15,6 +15,7 @@ class UsersManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        Role.objects.create(user=user, name=Roles.ADMIN)
         return self.create_user(email, password, **extra_fields)
 
 
@@ -34,12 +35,13 @@ class Users(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
-class Role(models.Model):
-    class Roles(models.TextChoices):
-        ADMIN = 'ADMIN', 'Admin'
-        USER = 'USER', 'User'
-        EDITOR = 'EDITOR', 'Editor'
+class Roles(models.TextChoices):
+    ADMIN = 'ADMIN', 'Admin'
+    USER = 'USER', 'User'
+    EDITOR = 'EDITOR', 'Editor'
 
+
+class Role(models.Model):
     name = models.CharField(max_length=50, choices=Roles.choices)
     user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='roles')
 
