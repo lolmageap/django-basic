@@ -14,7 +14,8 @@ from .serializers import CreateTodoSerializer, FindOneTodoResponseSerializer, Fi
 
 class CreateTodoView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RoleBasedPermission]
+    roles = ["ADMIN", "USER"]
 
     def post(self):
         serializer = CreateTodoSerializer(data=self.request.data)
@@ -26,7 +27,8 @@ class CreateTodoView(APIView):
 
 class FindOneTodoView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RoleBasedPermission]
+    roles = ["ADMIN", "USER"]
 
     def get(self, pk: int):
         queryset = Todos.objects.filter(pk=pk, user=self.request.user)
@@ -42,7 +44,8 @@ class FindAllTodoView(ListAPIView):
     serializer_class = FindAllTodoResponseSerializer
     queryset = Todos.objects.all()
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RoleBasedPermission]
+    roles = ["ADMIN", "USER"]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -69,7 +72,8 @@ class FindAllTodoView(ListAPIView):
 
 class UpdateTodoView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RoleBasedPermission]
+    roles = ["ADMIN", "USER"]
 
     def put(self, pk: int):
         todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
@@ -85,7 +89,8 @@ class UpdateTodoView(APIView):
 
 class DeleteTodoView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RoleBasedPermission]
+    roles = ["ADMIN", "USER"]
 
     def delete(self, pk: int):
         todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
