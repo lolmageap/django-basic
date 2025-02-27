@@ -22,9 +22,14 @@ class CreateTodoSerializer(serializers.ModelSerializer):
 
         def validate_scheduling_time(self, data: dict) -> dict:
             user = data.get('user')
-            started_at = data.get('started_at')
-            ended_at = data.get('ended_at')
+            started_at = data.get('started_at').replace(second=0, microsecond=0)
+            ended_at = data.get('ended_at').replace(second=0, microsecond=0)
+            now = datetime.now()
 
+            if started_at < now:
+                raise serializers.ValidationError({'started_at': 'Start time must be greater than current time.'})
+            if ended_at < now:
+                raise serializers.ValidationError({'ended_at': 'End time must be greater than current time.'})
             if started_at > ended_at:
                 raise serializers.ValidationError({'ended_at': 'End time must be greater than start time.'})
 
@@ -65,9 +70,14 @@ class UpdateTodoSerializer(serializers.ModelSerializer):
 
         def validate_scheduling_time(self, data: dict) -> dict:
             user = data.get('user')
-            started_at = data.get('started_at')
-            ended_at = data.get('ended_at')
+            started_at = data.get('started_at').replace(second=0, microsecond=0)
+            ended_at = data.get('ended_at').replace(second=0, microsecond=0)
+            now = datetime.now()
 
+            if started_at < now:
+                raise serializers.ValidationError({'started_at': 'Start time must be greater than current time.'})
+            if ended_at < now:
+                raise serializers.ValidationError({'ended_at': 'End time must be greater than current time.'})
             if started_at > ended_at:
                 raise serializers.ValidationError({'ended_at': 'End time must be greater than start time.'})
 
