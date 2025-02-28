@@ -1,11 +1,11 @@
-from xml.etree.ElementInclude import include
-from django.urls import path, include
 from django.contrib import admin
+from django.urls import include
 from django.urls import path
-from users.urls import router as user_router
-from todos.urls import router as todo_router
-from common.hybridrouter import HybridRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+
+from common.hybridrouter import HybridRouter
+from todos.urls import router as todo_router
+from users.urls import router as user_router
 
 router = HybridRouter()
 router.register_router(user_router)
