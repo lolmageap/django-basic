@@ -25,7 +25,11 @@ class SignUpView(APIView):
         status.HTTP_500_INTERNAL_SERVER_ERROR: None,
     }
 
-    @extend_schema(request=request, responses=response)
+    @extend_schema(
+        summary="Sign up",
+        request=request,
+        responses=response,
+    )
     def post(self, request: Request) -> Response:
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -49,7 +53,11 @@ class LoginView(APIView):
         status.HTTP_500_INTERNAL_SERVER_ERROR: None,
     }
 
-    @extend_schema(request=request, responses=response)
+    @extend_schema(
+        summary="Login",
+        request=request,
+        responses=response,
+    )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -84,7 +92,10 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = None
 
-    @extend_schema(responses={status.HTTP_200_OK: None})
+    @extend_schema(
+        summary="Logout",
+        responses={status.HTTP_200_OK: None}
+    )
     def post(self):
         response = Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
         response.headers["Authorization"] = ""

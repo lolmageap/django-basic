@@ -1,91 +1,70 @@
 from django.db import transaction
-from rest_framework import status
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.generics import ListAPIView
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.request import Request
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from common.exceptions import NotFoundException
 from common.permissions import RoleBasedPermission
-from drf_spectacular.utils import extend_schema
-
 from .models import Todos
-from .serializers import CreateTodoSerializer, FindOneTodoResponseSerializer, FindAllTodoResponseSerializer, \
-    FindAllTodoRequestSerializer, UpdateTodoSerializer
+from .serializers import (
+    CreateTodoSerializer, FindOneTodoResponseSerializer,
+    FindAllTodoResponseSerializer, FindAllTodoRequestSerializer,
+    UpdateTodoSerializer
+)
 
 
-class CreateTodoView(APIView):
+@extend_schema_view(
+    list=extend_schema(
+        summary="모든 TODO 조회",
+        request=FindAllTodoRequestSerializer,
+        responses={status.HTTP_200_OK: FindAllTodoResponseSerializer(many=True)}
+    ),
+    retrieve=extend_schema(
+        summary="단일 TODO 조회",
+        responses={status.HTTP_200_OK: FindOneTodoResponseSerializer}
+    ),
+    create=extend_schema(
+        summary="TODO 생성",
+        request=CreateTodoSerializer,
+        responses={status.HTTP_201_CREATED: None}
+    ),
+    update=extend_schema(
+        summary="TODO 수정",
+        request=UpdateTodoSerializer,
+        responses={status.HTTP_200_OK: None}
+    ),
+    destroy=extend_schema(
+        summary="TODO 삭제",
+        responses={status.HTTP_200_OK: None}
+    )
+)
+class TodoViewSet(viewsets.GenericViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, RoleBasedPermission]
     roles = ["ADMIN", "USER"]
-    request = {
-        'application/json': CreateTodoSerializer,
-    }
-    response = {
-        status.HTTP_201_CREATED: None,
-        status.HTTP_400_BAD_REQUEST: None,
-        status.HTTP_500_INTERNAL_SERVER_ERROR: None,
-    }
-
-    @extend_schema(request=request, responses=response)
-    def post(self, request, *args, **kwargs):
-        serializer = CreateTodoSerializer(data=self.request.data)
-
-        serializer.is_valid(raise_exception=True)
-        with transaction.atomic():
-            serializer.save(user=request.user)
-            return Response({"message": "Todo created successfully"}, status=status.HTTP_201_CREATED)
-
-
-class FindOneTodoView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, RoleBasedPermission]
-    roles = ["ADMIN", "USER"]
-    request = {
-        'application/json': None,
-    }
-    response = {
-        status.HTTP_200_OK: FindOneTodoResponseSerializer,
-        status.HTTP_400_BAD_REQUEST: None,
-        status.HTTP_404_NOT_FOUND: None,
-    }
-
-    @extend_schema(request=request, responses=response)
-    def get(self, pk: int):
-        queryset = Todos.objects.filter(pk=pk, user=self.request.user)
-
-        if not queryset.exists():
-            raise NotFoundException("Todo not found")
-
-        response_serializer = FindOneTodoResponseSerializer(queryset.first())
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
-
-
-class FindAllTodoView(ListAPIView):
-    serializer_class = FindAllTodoResponseSerializer
     queryset = Todos.objects.all()
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, RoleBasedPermission]
-    roles = ["ADMIN", "USER"]
-    request = {
-        'application/json': FindAllTodoRequestSerializer,
-    }
-    response = {
-        status.HTTP_200_OK: FindAllTodoResponseSerializer(many=True),
-        status.HTTP_400_BAD_REQUEST: None,
-    }
 
-    @extend_schema(request=request, responses=response)
-    def get(self, request, *args, **kwargs):
-        queryset = self.queryset
+    def get_serializer_class(self):
+        if self.action == "create":
+            return CreateTodoSerializer
+        if self.action == "update":
+            return UpdateTodoSerializer
+        if self.action == "retrieve":
+            return FindOneTodoResponseSerializer
+        return FindAllTodoResponseSerializer
 
-        request_serializer = FindAllTodoRequestSerializer(data=self.request.query_params)
+    def list(self, request: Request, *args, **kwargs) -> Response:
+        queryset = self.get_queryset()
+        request_serializer = FindAllTodoRequestSerializer(data=request.query_params)
         request_serializer.is_valid(raise_exception=True)
+        user = request.user
 
-        start_date = request_serializer.validated_data.get('start_date')
-        end_date = request_serializer.validated_data.get('end_date')
-        user = request_serializer.validated_data.get('user')
-        is_completed = request_serializer.validated_data.get('is_completed')
+        start_date = request_serializer.validated_data.get("start_date")
+        end_date = request_serializer.validated_data.get("end_date")
+        is_completed = request_serializer.validated_data.get("is_completed")
 
         if start_date:
             queryset = queryset.filter(created_at__gte=start_date)
@@ -96,54 +75,38 @@ class FindAllTodoView(ListAPIView):
         if is_completed is not None:
             queryset = queryset.filter(is_completed=is_completed)
 
-        return queryset
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def retrieve(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        todo = self.get_queryset().filter(pk=pk, user=request.user).first()
+        if not todo: raise NotFoundException("Todo not found")
 
-class UpdateTodoView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, RoleBasedPermission]
-    roles = ["ADMIN", "USER"]
-    request = {
-        'application/json': UpdateTodoSerializer,
-    }
-    response = {
-        status.HTTP_200_OK: None,
-        status.HTTP_400_BAD_REQUEST: None,
-        status.HTTP_404_NOT_FOUND: None,
-    }
+        serializer = self.get_serializer(todo)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @extend_schema(request=request, responses=response)
-    def put(self, pk: int):
-        todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
-        if todo is None:
-            raise NotFoundException("Todo not found")
-
-        serializer = UpdateTodoSerializer(data=self.request.data, instance=todo)
+    def create(self, request: Request, *args, **kwargs) -> Response:
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            serializer.save(user=request.user)
+            return Response({"message": "Todo created successfully"}, status=status.HTTP_201_CREATED)
+
+    def update(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        todo = self.get_queryset().filter(pk=pk, user=request.user).first()
+        if not todo: raise NotFoundException("Todo not found")
+
+        serializer = self.get_serializer(todo, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         with transaction.atomic():
             serializer.save()
             return Response({"message": "Todo updated successfully"}, status=status.HTTP_200_OK)
 
+    def destroy(self, request: Request, pk: int, *args, **kwargs) -> Response:
+        todo = self.get_queryset().filter(pk=pk, user=request.user).first()
+        if not todo: raise NotFoundException("Todo not found")
 
-class DeleteTodoView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, RoleBasedPermission]
-    roles = ["ADMIN", "USER"]
-    serializer_class = None
-    request = {
-        'application/json': None,
-    }
-    response = {
-        status.HTTP_200_OK: None,
-        status.HTTP_400_BAD_REQUEST: None,
-        status.HTTP_404_NOT_FOUND: None,
-    }
-
-    @extend_schema(request=request, responses=response)
-    def delete(self, pk: int):
-        todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
-        if todo is None:
-            raise NotFoundException("Todo not found")
-        else:
-            todo.delete()
-            return Response({"message": "Todo deleted successfully"}, status=status.HTTP_200_OK)
+        todo.delete()
+        return Response({"message": "Todo deleted successfully"}, status=status.HTTP_200_OK)
