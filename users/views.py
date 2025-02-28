@@ -3,18 +3,30 @@ from django.db import transaction
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from common.exceptions import AuthenticationFailedException
 from .models import Role, Roles
 from .serializers import LoginSerializer, SignUpSerializer
-from myapp.exceptions import AuthenticationFailedException
+from drf_spectacular.utils import extend_schema
 
 
 class SignUpView(APIView):
+    serializer_class = SignUpSerializer
     permission_classes = [AllowAny]
+    request = {
+        'application/json': SignUpSerializer,
+    }
+    response = {
+        status.HTTP_201_CREATED: None,
+        status.HTTP_400_BAD_REQUEST: None,
+        status.HTTP_500_INTERNAL_SERVER_ERROR: None,
+    }
 
-    def post(self, request):
+    @extend_schema(request=request, responses=response)
+    def post(self, request: Request) -> Response:
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
@@ -26,8 +38,18 @@ class SignUpView(APIView):
 
 
 class LoginView(APIView):
+    serializer_class = LoginSerializer
     permission_classes = [AllowAny]
+    request = {
+        'application/json': LoginSerializer,
+    }
+    response = {
+        status.HTTP_200_OK: None,
+        status.HTTP_400_BAD_REQUEST: None,
+        status.HTTP_500_INTERNAL_SERVER_ERROR: None,
+    }
 
+    @extend_schema(request=request, responses=response)
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -60,7 +82,9 @@ class LoginView(APIView):
 class LogoutView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = None
 
+    @extend_schema(responses={status.HTTP_200_OK: None})
     def post(self):
         response = Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
         response.headers["Authorization"] = ""

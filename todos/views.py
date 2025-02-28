@@ -1,11 +1,13 @@
 from django.db import transaction
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .custom_exception import NotFoundException
+from common.exceptions import NotFoundException
+from common.permissions import RoleBasedPermission
+from drf_spectacular.utils import extend_schema
 
 from .models import Todos
 from .serializers import CreateTodoSerializer, FindOneTodoResponseSerializer, FindAllTodoResponseSerializer, \
@@ -13,23 +15,42 @@ from .serializers import CreateTodoSerializer, FindOneTodoResponseSerializer, Fi
 
 
 class CreateTodoView(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, RoleBasedPermission]
     roles = ["ADMIN", "USER"]
+    request = {
+        'application/json': CreateTodoSerializer,
+    }
+    response = {
+        status.HTTP_201_CREATED: None,
+        status.HTTP_400_BAD_REQUEST: None,
+        status.HTTP_500_INTERNAL_SERVER_ERROR: None,
+    }
 
-    def post(self):
+    @extend_schema(request=request, responses=response)
+    def post(self, request, *args, **kwargs):
         serializer = CreateTodoSerializer(data=self.request.data)
+
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
-            serializer.save()
+            serializer.save(user=request.user)
             return Response({"message": "Todo created successfully"}, status=status.HTTP_201_CREATED)
 
 
 class FindOneTodoView(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, RoleBasedPermission]
     roles = ["ADMIN", "USER"]
+    request = {
+        'application/json': None,
+    }
+    response = {
+        status.HTTP_200_OK: FindOneTodoResponseSerializer,
+        status.HTTP_400_BAD_REQUEST: None,
+        status.HTTP_404_NOT_FOUND: None,
+    }
 
+    @extend_schema(request=request, responses=response)
     def get(self, pk: int):
         queryset = Todos.objects.filter(pk=pk, user=self.request.user)
 
@@ -43,11 +64,19 @@ class FindOneTodoView(APIView):
 class FindAllTodoView(ListAPIView):
     serializer_class = FindAllTodoResponseSerializer
     queryset = Todos.objects.all()
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, RoleBasedPermission]
     roles = ["ADMIN", "USER"]
+    request = {
+        'application/json': FindAllTodoRequestSerializer,
+    }
+    response = {
+        status.HTTP_200_OK: FindAllTodoResponseSerializer(many=True),
+        status.HTTP_400_BAD_REQUEST: None,
+    }
 
-    def get_queryset(self):
+    @extend_schema(request=request, responses=response)
+    def get(self, request, *args, **kwargs):
         queryset = self.queryset
 
         request_serializer = FindAllTodoRequestSerializer(data=self.request.query_params)
@@ -71,10 +100,19 @@ class FindAllTodoView(ListAPIView):
 
 
 class UpdateTodoView(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, RoleBasedPermission]
     roles = ["ADMIN", "USER"]
+    request = {
+        'application/json': UpdateTodoSerializer,
+    }
+    response = {
+        status.HTTP_200_OK: None,
+        status.HTTP_400_BAD_REQUEST: None,
+        status.HTTP_404_NOT_FOUND: None,
+    }
 
+    @extend_schema(request=request, responses=response)
     def put(self, pk: int):
         todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
         if todo is None:
@@ -88,10 +126,20 @@ class UpdateTodoView(APIView):
 
 
 class DeleteTodoView(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, RoleBasedPermission]
     roles = ["ADMIN", "USER"]
+    serializer_class = None
+    request = {
+        'application/json': None,
+    }
+    response = {
+        status.HTTP_200_OK: None,
+        status.HTTP_400_BAD_REQUEST: None,
+        status.HTTP_404_NOT_FOUND: None,
+    }
 
+    @extend_schema(request=request, responses=response)
     def delete(self, pk: int):
         todo = Todos.objects.filter(pk=pk, user=self.request.user).first()
         if todo is None:
