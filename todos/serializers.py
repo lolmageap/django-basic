@@ -7,7 +7,7 @@ from .models import Todos
 class CreateTodoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Todos
-        fields = 'title', 'description', 'user', 'started_at', 'ended_at'
+        fields = 'title', 'description', 'started_at', 'ended_at'
 
         def validate(self, data):
             data = self.validate_initialize(data)
