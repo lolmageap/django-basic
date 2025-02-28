@@ -56,6 +56,8 @@ REST_FRAMEWORK = {
     ],
     'EXCEPTION_HANDLER': 'common.exceptions.custom_exception_handler',
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'common.pagination.CustomPagination',
+
 }
 
 AUTH_USER_MODEL = 'users.Users'

@@ -8,6 +8,7 @@ from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from common.exceptions import NotFoundException
 from common.permissions import RoleBasedPermission
+from common.pagination import CustomPagination
 from .models import Todos
 from .serializers import (
     CreateTodoSerializer, FindOneTodoResponseSerializer,
@@ -44,6 +45,7 @@ from .serializers import (
 class TodoViewSet(viewsets.GenericViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, RoleBasedPermission]
+    pagination_class = CustomPagination
     roles = ["ADMIN", "USER"]
     queryset = Todos.objects.all()
 
@@ -57,7 +59,7 @@ class TodoViewSet(viewsets.GenericViewSet):
         return FindAllTodoResponseSerializer
 
     def list(self, request: Request, *args, **kwargs) -> Response:
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().order_by("id")
         request_serializer = FindAllTodoRequestSerializer(data=request.query_params)
         request_serializer.is_valid(raise_exception=True)
         user = request.user
@@ -75,8 +77,13 @@ class TodoViewSet(viewsets.GenericViewSet):
         if is_completed is not None:
             queryset = queryset.filter(is_completed=is_completed)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request: Request, pk: int, *args, **kwargs) -> Response:
         todo = self.get_queryset().filter(pk=pk, user=request.user).first()
