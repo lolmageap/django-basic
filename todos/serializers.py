@@ -48,16 +48,10 @@ class CreateTodoSerializer(serializers.ModelSerializer):
         return data
 
 
-class FindOneTodoResponseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Todos
-        fields = ('id', 'title', 'description', 'is_completed', 'created_at')
-
-
 class FindAllTodoRequestSerializer(serializers.Serializer):
-    start_date = serializers.DateField(required=False)
-    end_date = serializers.DateField(required=False)
-    is_completed = serializers.BooleanField(required=False)
+    start_date = serializers.DateField(required=False, read_only=True, allow_null=True)
+    end_date = serializers.DateField(required=False, read_only=True, allow_null=True)
+    is_completed = serializers.BooleanField(required=False, read_only=True, allow_null=True)
 
 
 class UpdateTodoSerializer(serializers.ModelSerializer):
@@ -100,6 +94,12 @@ class UpdateTodoSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'You have a task scheduled at this time.'})
 
         return data
+
+
+class FindOneTodoResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Todos
+        fields = ('id', 'title', 'description', 'is_completed', 'created_at')
 
 
 class FindAllTodoResponseSerializer(serializers.ModelSerializer):

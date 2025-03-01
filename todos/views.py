@@ -46,8 +46,8 @@ class TodoViewSet(viewsets.GenericViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, RoleBasedPermission]
     pagination_class = CustomPagination
-    roles = ["ADMIN", "USER"]
     queryset = Todos.objects.all()
+    roles = ["ADMIN", "USER"]
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -56,7 +56,10 @@ class TodoViewSet(viewsets.GenericViewSet):
             return UpdateTodoSerializer
         if self.action == "retrieve":
             return FindOneTodoResponseSerializer
-        return FindAllTodoResponseSerializer
+        if self.action == "list":
+            return FindAllTodoResponseSerializer
+        if self.action == "destroy":
+            return None
 
     def list(self, request: Request, *args, **kwargs) -> Response:
         queryset = self.get_queryset().order_by("id")
