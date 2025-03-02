@@ -206,8 +206,13 @@ LOGGING = {
         },
     },
     "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
         "file": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.FileHandler",
             "filename": "django.log",
             "formatter": "verbose",
@@ -217,6 +222,11 @@ LOGGING = {
         "django": {
             "handlers": ["file"],
             "level": "INFO",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "level": "DEBUG",
+            "handlers": ["console"],
             "propagate": False,
         },
     },
