@@ -13,14 +13,6 @@ class PasswordValidator:
 
 
 class SignUpSerializer(serializers.Serializer):
-    # version 1
-    # class Meta:
-    #     model = Users
-    #     fields = ['id', 'name', 'email', 'password']
-    #     extra_kwargs = {
-    #         'password': {'write_only': True},
-    #     }
-
     name = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     password = serializers.CharField(max_length=125)
