@@ -13,6 +13,17 @@ Content-Type: application/json
   "password_confirm": "test1234!"
 }
 
+### sign up v2
+POST http://localhost:8000/sign-up-v2/
+Content-Type: application/json
+
+{
+  "name": "정철희",
+  "email": "ekxk1234@gmail.com",
+  "password": "test1234!",
+  "password_confirm": "test1234"
+}
+
 
 ### login
 POST http://localhost:8000/login/
