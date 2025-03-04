@@ -11,6 +11,7 @@ from common.exceptions import AuthenticationFailedException
 from .models import Role, Roles
 from .serializers import LoginSerializer, SignUpSerializer
 from drf_spectacular.utils import extend_schema
+from .request import SignUpRequest
 
 
 class SignUpView(APIView):
@@ -38,6 +39,38 @@ class SignUpView(APIView):
             Role.objects.create(user=user, name=Roles.USER)
         return Response(
             {"message": "User created successfully"}, status=status.HTTP_201_CREATED
+        )
+
+class SignUpViewV2(APIView):
+
+    permission_classes = [AllowAny]
+    request = {
+        'application/json': SignUpSerializer,
+    }
+    response = {
+        status.HTTP_201_CREATED: None,
+        status.HTTP_400_BAD_REQUEST: None,
+        status.HTTP_500_INTERNAL_SERVER_ERROR: None,
+    }
+
+    @extend_schema(
+        summary="Sign up",
+        request=SignUpRequest.__annotations__,
+        responses=response,
+    )
+    def post(self, request: Request) -> Response:
+        try:
+            validated_data = SignUpRequest(**request.data)
+        except ValueError as e:
+            return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            user = Users.objects.create(**validated_data.to_user())
+            Role.objects.create(user=user, name=Roles.USER)
+
+        return Response(
+            {"message": "User created successfully"},
+            status=status.HTTP_201_CREATED
         )
 
 
