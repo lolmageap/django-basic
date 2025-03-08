@@ -1,5 +1,8 @@
 from dataclasses import dataclass
+
 from pydantic import EmailStr
+from pydantic.main import BaseModel
+
 
 @dataclass(frozen=True)
 class SignUpRequest:
@@ -18,3 +21,9 @@ class SignUpRequest:
             "email": self.email,
             "password": make_password(self.password),
         }
+
+class SignUpRequestV2(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    password_confirm: str
