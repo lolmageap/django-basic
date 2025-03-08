@@ -9,11 +9,10 @@ from users.models import Users
 
 @override_settings(DEBUG=True)
 @query_logging
-@pytest.mark.django_db
 def test_select_all():
     return list(Users.objects.all())
 
-
+@pytest.mark.django_db
 class TestLogging(TestCase):
     def test_logging(self):
         test_select_all()
