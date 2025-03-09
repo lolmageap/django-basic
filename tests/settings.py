@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from common.ttl import ONE_MINUTE
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-d01a-k3*t1dfvg6wf7)r50+-tkn$#d#!&**=!ok4pdy(wlryj8'
@@ -131,3 +133,14 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "SOCKET_CONNECT_TIMEOUT": ONE_MINUTE,
+            "SOCKET_TIMEOUT": ONE_MINUTE,
+        },
+    },
+}
