@@ -33,3 +33,7 @@ Content-Type: application/json
   "email": "ekxk1234@gmail.com",
   "password": "test1234!"
 }
+
+###
+GET http://localhost:8000/api/sample/2/detail/1/
+Content-Type: application/json
